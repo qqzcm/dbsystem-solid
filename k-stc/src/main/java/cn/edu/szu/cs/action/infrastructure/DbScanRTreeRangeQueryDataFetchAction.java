@@ -1,9 +1,9 @@
-package cn.edu.szu.cs.adapter.impl;
+package cn.edu.szu.cs.action.infrastructure;
 
-import cn.edu.szu.cs.adapter.DataFetchAction;
+import cn.edu.szu.cs.action.DataFetchAction;
 import cn.edu.szu.cs.adapter.KstcDataFetchManager;
-import cn.edu.szu.cs.common.DataFetchCommandConstant;
-import cn.edu.szu.cs.entity.DataFetchTask;
+import cn.edu.szu.cs.constant.DataFetchConstant;
+import cn.edu.szu.cs.entity.DataFetchResult;
 import cn.edu.szu.cs.entity.DbScanRelevantObject;
 import cn.edu.szu.cs.entity.GeoPointDouble;
 import cn.edu.szu.cs.entity.KstcQuery;
@@ -26,16 +26,21 @@ import java.util.Queue;
  * @version 1.0
  */
 @SuppressWarnings("all")
-public class RTreeRangeQueryDataFetchAction implements DataFetchAction<KstcQuery, Queue>{
+public class DbScanRTreeRangeQueryDataFetchAction implements DataFetchAction<KstcQuery, Queue> {
 
 
     private Log log = LogFactory.get();
 
-    private static final String CACHE_KEY_PREFIX = "RTREE_RANGE_QUERY:{0}:{1}:{2}";
+    private static final String CACHE_KEY_PREFIX = "DBSCAN_RTREE_RANGE_QUERY:{0}:{1}:{2}";
 
     @Override
     public String getCommand() {
-        return DataFetchCommandConstant.RTREE_RANGE_QUERY;
+        return DataFetchConstant.DBSCAN_RTREE_RANGE_QUERY;
+    }
+
+    @Override
+    public String getCommandType() {
+        return DataFetchConstant.INFRASTRUCTURE_LAYER;
     }
 
     @Override
@@ -64,12 +69,9 @@ public class RTreeRangeQueryDataFetchAction implements DataFetchAction<KstcQuery
     @Override
     public Queue fetchData(KstcQuery params) {
 
-        String actionId = KstcDataFetchManager.generateTask(
-                DataFetchCommandConstant.LOAD_RTREE_DATA_BY_KEYWORDS,
-                JSON.toJSONString(params)
-        );
-
-        DataFetchTask task = KstcDataFetchManager.getTask(actionId);
+        DataFetchResult task = KstcDataFetchManager.generateTaskAndGet(DataFetchConstant.INFRASTRUCTURE_LAYER,
+                DataFetchConstant.LOAD_DBSCAN_RTREE_DATA_BY_KEYWORDS,
+                JSON.toJSONString(params));
 
         if(!task.isSuccess()) {
             throw new RuntimeException("RTreeRangeQueryDataFetchAction fetchData failed");

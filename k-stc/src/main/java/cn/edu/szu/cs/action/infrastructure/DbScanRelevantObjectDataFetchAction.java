@@ -1,13 +1,12 @@
-package cn.edu.szu.cs.adapter.impl;
+package cn.edu.szu.cs.action.infrastructure;
 
-import cn.edu.szu.cs.adapter.DataFetchAction;
-import cn.edu.szu.cs.common.DataFetchCommandConstant;
+import cn.edu.szu.cs.action.DataFetchAction;
+import cn.edu.szu.cs.adapter.KstcDataFetchManager;
+import cn.edu.szu.cs.constant.DataFetchConstant;
 import cn.edu.szu.cs.entity.DbScanRelevantObject;
 import cn.edu.szu.cs.entity.KstcQuery;
-import cn.edu.szu.cs.infrastructure.IRelevantObjectDataLoader;
-import cn.edu.szu.cs.infrastructure.RelevantObjectDataLoaderImpl;
+import cn.edu.szu.cs.infrastructure.dataloader.IRelevantObjectDataLoader;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.io.resource.ClassPathResource;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
@@ -16,7 +15,7 @@ import com.alibaba.fastjson.JSON;
 import java.util.List;
 
 @SuppressWarnings("all")
-public class DbScanDataByKeywordsDataFetchAction implements DataFetchAction<KstcQuery, List> {
+public class DbScanRelevantObjectDataFetchAction implements DataFetchAction<KstcQuery, List> {
 
     private IRelevantObjectDataLoader<DbScanRelevantObject> relevantObjectDataLoader = null;
 
@@ -24,16 +23,19 @@ public class DbScanDataByKeywordsDataFetchAction implements DataFetchAction<Kstc
 
     private final Log log = LogFactory.get();
 
-    public DbScanDataByKeywordsDataFetchAction() {
+    public DbScanRelevantObjectDataFetchAction() {
 
-        ClassPathResource classPathResource = new ClassPathResource("objs.txt");
-
-        relevantObjectDataLoader = new RelevantObjectDataLoaderImpl<>(classPathResource.getStream(), DbScanRelevantObject.class);
+        relevantObjectDataLoader = KstcDataFetchManager.getDbscanDataLoader();
     }
 
     @Override
     public String getCommand() {
-        return DataFetchCommandConstant.LOAD_DBSCAN_DATA_BY_KEYWORDS;
+        return DataFetchConstant.LOAD_DBSCAN_DATA_BY_KEYWORDS;
+    }
+
+    @Override
+    public String getCommandType() {
+        return DataFetchConstant.INFRASTRUCTURE_LAYER;
     }
 
     @Override

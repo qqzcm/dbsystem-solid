@@ -1,7 +1,7 @@
-package cn.edu.szu.cs.adapter.impl;
+package cn.edu.szu.cs.action.operatianal;
 
-import cn.edu.szu.cs.adapter.DataFetchAction;
-import cn.edu.szu.cs.common.DataFetchCommandConstant;
+import cn.edu.szu.cs.action.DataFetchAction;
+import cn.edu.szu.cs.constant.DataFetchConstant;
 import cn.edu.szu.cs.entity.DbScanRelevantObject;
 import cn.edu.szu.cs.entity.KstcQuery;
 import cn.edu.szu.cs.kstc.dbscan.AbstractDbScanBasedApproach;
@@ -25,10 +25,10 @@ import java.util.Set;
 @SuppressWarnings("all")
 public class SimpleDbScanBasedApproachDataFetchAction implements DataFetchAction<KstcQuery, List> {
 
-    private Log log = LogFactory.get();
+    private static Log log = LogFactory.get();
 
     private static final String CACHE_KEY_PREFIX = "SIMPLE_DBSCAN_BASED_APPROACH:{0}";
-    private LRUCache<String,List> cache = CacheUtil.newLRUCache(128, 3600 * 1000L);
+    private LRUCache<String,List> cache = CacheUtil.newLRUCache(32, 3600 * 1000L);
 
     private AbstractDbScanBasedApproach<DbScanRelevantObject> dbScanBasedApproach;
 
@@ -39,12 +39,16 @@ public class SimpleDbScanBasedApproachDataFetchAction implements DataFetchAction
 
     @Override
     public String getCommand() {
-        return DataFetchCommandConstant.SIMPLE_DBSCAN_BASED_APPROACH;
+        return DataFetchConstant.SIMPLE_DBSCAN_BASED_APPROACH;
+    }
+
+    @Override
+    public String getCommandType() {
+        return DataFetchConstant.OPERATIONAL_LAYER;
     }
 
     @Override
     public KstcQuery parseParams(String paramsStr) {
-
         return JSON.parseObject(paramsStr, KstcQuery.class);
     }
 

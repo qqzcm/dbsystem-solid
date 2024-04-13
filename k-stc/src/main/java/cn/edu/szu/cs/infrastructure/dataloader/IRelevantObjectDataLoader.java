@@ -1,6 +1,6 @@
-package cn.edu.szu.cs.infrastructure;
+package cn.edu.szu.cs.infrastructure.dataloader;
 
-import cn.edu.szu.cs.entity.RelevantObject;
+import cn.edu.szu.cs.kstc.RelevantObject;
 
 import java.util.List;
 
@@ -56,5 +56,13 @@ public interface IRelevantObjectDataLoader<T extends RelevantObject> {
      */
 
     List<T> getObjectsByKeywords(List<String> keywords);
+
+
+    /**
+     * 获取所有标签
+     * <p> Get all labels
+     * @return
+     */
+    List<String> getAllLabels();
 
 }

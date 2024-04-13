@@ -1,4 +1,4 @@
-package cn.edu.szu.cs;
+package cn.edu.szu.cs.kstc;
 
 import cn.edu.szu.cs.adapter.KstcDataFetchManager;
 import cn.edu.szu.cs.constant.DataFetchConstant;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 
-public class TestMain {
+public class OpticsOmTest {
     public static void main(String[] args) {
 
         KstcQuery query = new KstcQuery();
@@ -24,10 +24,10 @@ public class TestMain {
         query.setMinPts(10);
         query.setMaxDistance(Double.MAX_VALUE);
         query.setCoordinate(new double[]{-75.16,39.95});
-        query.setCommand(DataFetchConstant.SIMPLE_DBSCAN_BASED_APPROACH);
+        query.setCommand(DataFetchConstant.OPTICS_BASED_APPROACH_OM);
 
         DataFetchResult task = KstcDataFetchManager.generateTaskAndGet(DataFetchConstant.OPERATIONAL_LAYER,
-                DataFetchConstant.SIMPLE_DBSCAN_BASED_APPROACH,
+                DataFetchConstant.OPTICS_BASED_APPROACH_OM,
                 JSON.toJSONString(query));
 
         List<Set<DbScanRelevantObject>> result = new ArrayList<>();

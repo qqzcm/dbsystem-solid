@@ -1,10 +1,9 @@
-package cn.edu.szu.cs.infrastructure;
+package cn.edu.szu.cs.infrastructure.dataloader;
 
-import cn.edu.szu.cs.entity.RelevantObject;
+import cn.edu.szu.cs.kstc.RelevantObject;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.LineHandler;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 import com.alibaba.fastjson.JSON;
@@ -12,6 +11,7 @@ import com.alibaba.fastjson.JSON;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -27,15 +27,15 @@ public class RelevantObjectDataLoaderImpl<T extends RelevantObject> implements I
      * 数据对象集合. 存储id和对象数据的映射
      * <p> Data object collection. Store the mapping of id and object data
      */
-    private final Map<String, T> objs = new HashMap<>();
+    private final Map<String, T> objs = new ConcurrentHashMap<>();
 
     /**
      * 标签-对象id映射
      * <p> Label-object id mapping
      */
-    private final Map<String,Set<String>> labelObjectIdMap = new HashMap<>();
+    private final Map<String, Set<T>> labelObjectMap = new ConcurrentHashMap<>();
 
-    private Log log = LogFactory.get();
+    private static Log log = LogFactory.get();
 
     public RelevantObjectDataLoaderImpl(InputStream inputStream, Class<T> clazz) {
 
@@ -58,12 +58,12 @@ public class RelevantObjectDataLoaderImpl<T extends RelevantObject> implements I
             throw new IllegalArgumentException("relevantObjects is empty");
         }
 
-        for (RelevantObject relatedObject : relevantObjects) {
+        for (T relatedObject : relevantObjects) {
             List<String> labels = relatedObject.getLabels();
             if (CollUtil.isNotEmpty(labels)) {
                 for (String label : labels) {
-                    labelObjectIdMap.putIfAbsent(label, new HashSet<>());
-                    labelObjectIdMap.get(label).add(relatedObject.getObjectId());
+                    labelObjectMap.putIfAbsent(label, new HashSet<>());
+                    labelObjectMap.get(label).add(relatedObject);
                 }
             }
         }
@@ -76,6 +76,7 @@ public class RelevantObjectDataLoaderImpl<T extends RelevantObject> implements I
     /**
      * 通过id获取对象
      * <p> Get object by id
+     *
      * @param id
      * @return
      */
@@ -87,12 +88,13 @@ public class RelevantObjectDataLoaderImpl<T extends RelevantObject> implements I
     /**
      * 通过id列表获取对象
      * <p> Get object by id list
+     *
      * @param ids
      * @return
      */
     @Override
-    public List<T> getByIds(List<String> ids) {
-        if(CollUtil.isEmpty(ids)){
+    public synchronized List<T> getByIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
         }
         return ids.stream()
@@ -105,6 +107,7 @@ public class RelevantObjectDataLoaderImpl<T extends RelevantObject> implements I
     /**
      * 通过id获取对象的标签
      * <p> Get object's labels by id
+     *
      * @return
      */
     @Override
@@ -115,42 +118,72 @@ public class RelevantObjectDataLoaderImpl<T extends RelevantObject> implements I
     /**
      * 通过id获取对象的标签
      * <p> Get object's labels by id
+     *
      * @param keyword
      * @return
      */
     @Override
-    public List<T> getObjectsByKeyword(String keyword) {
+    public synchronized List<T> getObjectsByKeyword(String keyword) {
 
-        Set<String> objectIds = labelObjectIdMap.get(keyword);
-
-        return objectIds.stream()
-                .map(objs::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        Set<T> set = labelObjectMap.get(keyword);
+        if (set == null) {
+            return Collections.emptyList();
+        }
+        return new ArrayList<>(set);
     }
 
     /**
      * 通过关键字列表获取对象
      * <p> Get object by keyword list
+     *
      * @param keywords
      * @return
      */
     @Override
-    public List<T> getObjectsByKeywords(List<String> keywords) {
-        log.info("getObjectsByKeywords:{}",keywords);
-        if(CollUtil.isEmpty(keywords)){
+    public synchronized List<T> getObjectsByKeywords(List<String> keywords) {
+        log.info("getObjectsByKeywords:{}", keywords);
+        if (CollUtil.isEmpty(keywords)) {
             return Collections.emptyList();
         }
 
-        return keywords.stream()
-                .filter(StrUtil::isNotBlank)
-                .map(labelObjectIdMap::get)
-                .filter(Objects::nonNull)
-                .flatMap(Set::stream)
-                .map(objs::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        Set<T> set = keywords.stream()
+                .map(labelObjectMap::get)
+                .filter(CollUtil::isNotEmpty)
+                .reduce((set1, set2) -> {
+                    set1.retainAll(set2);
+                    return set1;
+                }).orElse(new HashSet<>());
 
+        return new ArrayList<>(set);
+
+    }
+
+    @Override
+    public List<String> getAllLabels() {
+        return new ArrayList<>(labelObjectMap.keySet());
+    }
+
+    /**
+     * 通过关键字列表获取对象id,并取交集
+     *
+     * @param keywords
+     * @return
+     */
+    private synchronized Set<T> getObjectIdsByKeyword(List<String> keywords) {
+
+        return keywords.stream()
+                .map(labelObjectMap::get)
+                .filter(CollUtil::isNotEmpty)
+                .reduce((set1, set2) -> {
+                    set1.retainAll(set2);
+                    return set1;
+                }).orElse(new HashSet<>());
+    }
+
+    public synchronized List<String> prefixSearch(String keyword) {
+        return labelObjectMap.keySet().stream()
+                .filter(label -> label.startsWith(keyword))
+                .collect(Collectors.toList());
     }
 
 }

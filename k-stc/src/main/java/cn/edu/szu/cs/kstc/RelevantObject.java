@@ -1,4 +1,4 @@
-package cn.edu.szu.cs.entity;
+package cn.edu.szu.cs.kstc;
 
 import java.util.List;
 
