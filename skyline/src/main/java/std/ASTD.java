@@ -94,15 +94,17 @@ public class ASTD {
                 } else {
                     if (!skyRTreePrunes(skyRtree, e)) {
                         Node<String, Geometry> N = (Node<String, Geometry>) e;
-                        if (N instanceof NonLeafDefault<String, Geometry>) {
-                            for (Node<String, Geometry> e1 : ((NonLeafDefault<String, Geometry>) N).children()) {
+                        if (N instanceof NonLeafDefault) {
+                            NonLeafDefault<String, Geometry> nonLeaf = (NonLeafDefault<String, Geometry>) N;
+                            for (Node<String, Geometry> e1 : nonLeaf.children()) {
                                 Rectangle MBRe1 = generateUncertaintyMBR(e1, query);
                                 if (MBRe1.intersects(B)) {
                                     minHeap.add(e1);
                                 }
                             }
-                        } else if (N instanceof LeafDefault<String, Geometry>) {
-                            for (Entry<String, Geometry> e1 : ((LeafDefault<String, Geometry>) N).entries()) {
+                        } else if (N instanceof LeafDefault) {
+                            LeafDefault<String, Geometry> leaf = (LeafDefault<String, Geometry>) N;
+                            for (Entry<String, Geometry> e1 : leaf.entries()) {
                                 Rectangle MBRe1 = generateUncertaintyMBR(e1, query);
                                 if (MBRe1.intersects(B)) {
                                     minHeap.add(e1);
@@ -147,8 +149,9 @@ public class ASTD {
         nodes.add(rootNode);
         while (!nodes.isEmpty()) {
             Node<String, Rectangle> N = nodes.remove();
-            if (N instanceof NonLeafDefault<String, Rectangle>) {
-                for (Node<String, Rectangle> childNode : ((NonLeafDefault<String, Rectangle>) N).children()) {
+            if (N instanceof NonLeafDefault) {
+                NonLeafDefault<String, Rectangle> nonLeaf = (NonLeafDefault<String, Rectangle>) N;
+                for (Node<String, Rectangle> childNode : nonLeaf.children()) {
                     Rectangle upperCorner1 = childNode.geometry().mbr();
                     if (!upperCorner1.intersects(p.geometry().mbr())) {
                         return true;
@@ -156,7 +159,8 @@ public class ASTD {
                     nodes.add(childNode);
                 }
             } else {
-                for (Entry<String, Rectangle> e : ((LeafDefault<String, Rectangle>) N).entries()) {
+                LeafDefault<String, Rectangle> leaf = (LeafDefault<String, Rectangle>) N;
+                for (Entry<String, Rectangle> e : leaf.entries()) {
                     if (!e.geometry().mbr().intersects(p.geometry().mbr())) {
                         return true;
                     }

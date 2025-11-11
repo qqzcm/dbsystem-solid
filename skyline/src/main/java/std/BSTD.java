@@ -104,15 +104,17 @@ public class BSTD {
                     }
                 } else {
                     Node<String, Geometry> N = (Node<String, Geometry>) e;
-                    if (N instanceof NonLeaf<String, Geometry>) {
-                        for (Node e1 : ((NonLeaf<String, Geometry>) N).children()) {
+                    if (N instanceof NonLeaf) {
+                        NonLeaf<String, Geometry> nonLeaf = (NonLeaf<String, Geometry>) N;
+                        for (Node e1 : nonLeaf.children()) {
                             Rectangle MBRe1 = generateUncertaintyMBR(e1, query);
                             if (MBRe1.intersects(B) && keywordsHave(e, query)) {
                                 minHeap.add(e1);
                             }
                         }
-                    } else if (N instanceof Leaf<String, Geometry>) {
-                        for (Entry e1 : ((Leaf<String, Geometry>) N).entries()) {
+                    } else if (N instanceof Leaf) {
+                        Leaf<String, Geometry> leaf = (Leaf<String, Geometry>) N;
+                        for (Entry e1 : leaf.entries()) {
                             Rectangle MBRe1 = generateUncertaintyMBR(e1, query);
                             if (MBRe1.intersects(B) && keywordsHave(e, query)) {
                                 minHeap.add(e1);
