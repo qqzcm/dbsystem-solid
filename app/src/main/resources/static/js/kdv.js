@@ -13,7 +13,7 @@ function loadHeatMap(vueThis) {
             Module.load_data();//首次计算加载数据集，不能放在compute中加载
 
             let request = compute(vueThis.kdv);
-            console.log("compute request", request)
+            // console.log("compute request", request)
             vueThis.map.addSource('matrix-source', {
                 type: 'geojson',
                 data: {
@@ -39,9 +39,9 @@ function loadHeatMap(vueThis) {
 function upadateMap(vueThis) {
 
     getBounds(vueThis);
-    console.time("module")
+    // console.time("module")
     let request = compute(vueThis.kdv);
-    console.timeEnd("module")
+    // console.timeEnd("module")
     // axios.post(vueThis.baseUrl + "/kdv/geojson", request)
     //     .then(function (response) {
     //         // 添加 GeoJSON 数据源
@@ -52,12 +52,12 @@ function upadateMap(vueThis) {
     //     });
     // if (vueThis.map.getSource('matrix-source'))
     //     vueThis.map.removeSource('matrix-source');
-    console.time("geojson")
+    // console.time("geojson")
     vueThis.map.getSource('matrix-source').setData({
         type: "FeatureCollection",
         features: computeHeatMatrix(vueThis.kdv, matrixDataProcess(request, vueThis.kdv.kdv_type))
     });
-    console.timeEnd("geojson")
+    // console.timeEnd("geojson")
 
     // if (vueThis.kdv.kdv_type == 1)
     //     buildMatrixHeatmap(vueThis, 'matrix-source')

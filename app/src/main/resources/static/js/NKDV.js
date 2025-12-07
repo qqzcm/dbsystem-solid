@@ -1,116 +1,256 @@
 import createModule from '/js/nkdvWasm/nkdvCpp.js';
 
-let nkdvModule = await createModule({
-  locateFile: (path, prefix) => {
-    if (path.endsWith('.data')) {
-      return '/js/nkdvWasm/nkdvCpp.data'; // 或根据变量动态返回路径
+let nkdvModule = null;
+let edgeCoords = null;
+let updateTimeout = null;
+let isMapReady = false;
+
+// 性能优化：缓存完整计算结果
+let fullLixelData = null;
+let currentParams = null;  // 记录当前参数
+
+// 初始化模块（只执行一次）
+async function initModule() {
+    if (!nkdvModule) {
+        nkdvModule = await createModule({
+            locateFile: (path, prefix) => {
+                if (path.endsWith('.data')) {
+                    return '/js/nkdvWasm/nkdvCpp.data';
+                }
+                return prefix + path;
+            }
+        });
+        
+        // 加载网络（只执行一次）
+        nkdvModule._load_network();
+        console.log('[NKDV] Module initialized');
     }
-    return prefix + path;
-  }
-});
+    return nkdvModule;
+}
 
-async function compute_nkdv(lixel,bandwidth) { 
-    console.log(lixel)
-    nkdvModule._load_parameters(3,lixel,2,bandwidth); 
-    const response = await fetch('/data/NKDV/edges_geometry.csv');
-    if (!response.ok) throw new Error('网络响应错误');
-    const text = await response.text();
-    let csvText = text;
-    // console.log("load network");
-    let data =  nkdvModule.UTF8ToString(nkdvModule._compute())
-    // console.log("compute data:"+data)
+// 加载边几何数据（只执行一次）
+async function loadEdgeGeometry() {
+    if (!edgeCoords) {
+        const response = await fetch('/data/NKDV/edges_geometry.csv');
+        if (!response.ok) throw new Error('Failed to load edge geometry');
+        const text = await response.text();
+        edgeCoords = parseCsv(text);
+        console.log(`[NKDV] Loaded geometry for ${Object.keys(edgeCoords).length} edges`);
+    }
+    return edgeCoords;
+}
 
-    const edgeCoords = parseCsv(csvText);
-    const lixelData = parseOutputText(data);
-    const geojson = buildLineGeoJson(edgeCoords, lixelData,lixel);
-    // const geojson = buildGeoJson(edgeCoords, lixelData);
+// 获取地图边界（模仿 KDV 的 getBounds）
+function getBounds(vueThis) {
+    let bounds = vueThis.map.getBounds();
+    if (bounds) {
+        let sw = bounds.getSouthWest();
+        let ne = bounds.getNorthEast();
+        
+        // 更新 NKDV 配置中的边界
+        vueThis.NKDV.lon_min = sw.lng;
+        vueThis.NKDV.lon_max = ne.lng;
+        vueThis.NKDV.lat_min = sw.lat;
+        vueThis.NKDV.lat_max = ne.lat;
+        
+        console.log('[NKDV] Bounds updated:', {
+            lon: [vueThis.NKDV.lon_min.toFixed(4), vueThis.NKDV.lon_max.toFixed(4)],
+            lat: [vueThis.NKDV.lat_min.toFixed(4), vueThis.NKDV.lat_max.toFixed(4)]
+        });
+    }
+}
 
-    // 查看结果
-    // console.log(JSON.stringify(geojson, null, 2));
+// 手动过滤边界外的 lixels
+function filterByBounds(lixelData, edgeCoords, bounds) {
+    return lixelData.filter(([edgeIndex, dist_n1, dist_n2, kde_value]) => {
+        const [lon, lat] = calculateLixelCoords(edgeCoords, edgeIndex, dist_n1, dist_n2);
+        return lon >= bounds.lon_min && lon <= bounds.lon_max &&
+               lat >= bounds.lat_min && lat <= bounds.lat_max;
+    });
+}
+
+// 检查参数是否改变
+function paramsChanged(vueThis) {
+    const newParams = `${vueThis.NKDV.lixel}_${vueThis.NKDV.bandwidth}`;
+    if (currentParams !== newParams) {
+        currentParams = newParams;
+        return true;
+    }
+    return false;
+}
+
+// 清除缓存
+function clearCache() {
+    fullLixelData = null;
+    console.log('[NKDV] Cache cleared');
+}
+
+// 计算 NKDV（带边界裁剪 + 缓存优化）
+async function compute_nkdv_with_bounds(vueThis) {
+    const module = await initModule();
+    const coords = await loadEdgeGeometry();
+    
+    // 获取当前边界
+    getBounds(vueThis);
+    
+    // 检查参数是否改变，如果改变则清除缓存
+    if (paramsChanged(vueThis)) {
+        clearCache();
+    }
+    
+    // 如果没有缓存，执行完整计算
+    if (!fullLixelData) {
+        console.log('[NKDV] 🔄 First time computation, caching results...');
+        
+        // 设置参数
+        module._load_parameters(3, vueThis.NKDV.lixel, 2, vueThis.NKDV.bandwidth);
+        
+        // 执行计算
+        const startTime = performance.now();
+        const data = module.UTF8ToString(module._compute());
+        const endTime = performance.now();
+        console.log(`[NKDV] ⏱️  Full computation time: ${(endTime - startTime).toFixed(2)}ms`);
+        
+        // 解析并缓存结果
+        fullLixelData = parseOutputText(data);
+        console.log(`[NKDV] 💾 Cached ${fullLixelData.length} lixels`);
+    } else {
+        console.log('[NKDV] ⚡ Using cached data (fast path)');
+    }
+    
+    // 过滤边界外的 lixels（使用缓存数据）
+    const startFilter = performance.now();
+    const filteredData = filterByBounds(fullLixelData, coords, vueThis.NKDV);
+    const endFilter = performance.now();
+    console.log(`[NKDV] 🔍 Filtering time: ${(endFilter - startFilter).toFixed(2)}ms`);
+    console.log(`[NKDV] ✅ After filtering: ${filteredData.length} lixels in bounds`);
+    
+    // 构建 GeoJSON
+    const geojson = buildLineGeoJson(coords, filteredData, vueThis.NKDV.lixel);
+    
     return geojson;
 }
+
+// 加载热力图
 async function loadHeatMap(vueThis) {
-    
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         vueThis.map = new mapboxgl.Map({
-            container: 'map', // container id
+            container: 'map',
             style: vueThis.mapStyle,
-            center: [-122.4194, 37.7749], // 修改为旧金山的经纬度
-            zoom: 13  // 调整缩放级别以更好地显示城市
+            center: [-122.4194, 37.7749],
+            zoom: 13
         });
+        
         vueThis.map.on('load', async function () {
-            nkdvModule._load_network()
-            let geojson = await compute_nkdv(vueThis.NKDV.lixel,vueThis.NKDV.bandwidth)
-            vueThis.map.addSource('nkdv', {
-                type: 'geojson',
-                data: geojson
-            });
-
-            // 根据 density 渐变颜色渲染
-            // vueThis.map.addLayer({
-            //     id: 'nkdv-points',
-            //     type: 'circle',
-            //     source: 'nkdv',
-            //     paint: {
-            //         'circle-radius': 5,  // 点的大小
-            //         'circle-color': [
-            //             'interpolate',
-            //             ['linear'],
-            //             ['get', 'density'],
-            //             0, '#0000ff',    // 深蓝色 - 最低密度
-            //             0.2, '#00ffff',  // 青色
-            //             0.4, '#00ff00',  // 绿色
-            //             0.6, '#ffff00',  // 黄色
-            //             0.8, '#ff8c00',  // 橙色
-            //             1.0, '#ff0000'   // 红色 - 最高密度
-            //         ],
-            //         'circle-opacity': vueThis.NKDV.opacity
-            //     }
-            // });
-            vueThis.map.addLayer({
-                id: 'nkdv-lines',
-                type: 'line',
-                source: 'nkdv',
-                paint: {
-                    'line-width': 4,
-                    'line-color': [
-                        'interpolate',
-                        ['linear'],
-                        // 使用 normalize 表达式进行归一化
-                        ['get', 'density'],
-                        0, '#0000ff',    // 深蓝色 - 最低密度
-                        0.2, '#00ffff',  // 青色
-                        0.4, '#00ff00',  // 绿色
-                        0.6, '#ffff00',  // 黄色
-                        0.8, '#ff8c00',  // 橙色
-                        1.0, '#ff0000'   // 红色 - 最高密度
-                    ],
-                    'line-opacity': vueThis.NKDV.opacity
-                }
-            });
-
-            resolve()
+            try {
+                // 初始化边界
+                getBounds(vueThis);
+                
+                // 计算初始数据
+                console.log('[NKDV] Computing initial data...');
+                let geojson = await compute_nkdv_with_bounds(vueThis);
+                
+                // 添加数据源
+                vueThis.map.addSource('nkdv', {
+                    type: 'geojson',
+                    data: geojson
+                });
+                
+                // 添加图层
+                vueThis.map.addLayer({
+                    id: 'nkdv-lines',
+                    type: 'line',
+                    source: 'nkdv',
+                    paint: {
+                        'line-width': 4,
+                        'line-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'density'],
+                            0, '#0000ff',
+                            0.2, '#00ffff',
+                            0.4, '#00ff00',
+                            0.6, '#ffff00',
+                            0.8, '#ff8c00',
+                            1.0, '#ff0000'
+                        ],
+                        'line-opacity': vueThis.NKDV.opacity
+                    }
+                });
+                
+                // 标记地图已准备好
+                isMapReady = true;
+                console.log('[NKDV] Initial load complete');
+                resolve();
+            } catch (error) {
+                console.error('[NKDV] Error loading:', error);
+                reject(error);
+            }
         });
-
+        
+        // 监听缩放事件（带防抖）
         vueThis.map.on('zoomend', function () {
-            // upadateMap(vueThis)
+            updateMapDebounced(vueThis);
         });
-
+        
+        // 监听移动事件（带防抖）
         vueThis.map.on('moveend', function () {
-            // upadateMap(vueThis)
+            updateMapDebounced(vueThis);
         });
-    })
-
+    });
 }
 
-async function upadateMap(vueThis) {
-    let geojson = await compute_nkdv(vueThis.NKDV.lixel,vueThis.NKDV.bandwidth)
-    vueThis.map.getSource('nkdv').setData(geojson);
+// 带防抖的更新函数
+function updateMapDebounced(vueThis) {
+    // 如果地图还没准备好，不触发更新
+    if (!isMapReady) {
+        console.log('[NKDV] Map not ready yet, skipping update');
+        return;
+    }
+    
+    if (updateTimeout) {
+        clearTimeout(updateTimeout);
+    }
+    
+    updateTimeout = setTimeout(() => {
+        updateMap(vueThis);
+    }, 500); // 500ms 延迟
+}
+
+// 更新地图（重新计算当前边界的 NKDV）
+async function updateMap(vueThis) {
+    try {
+        console.log('[NKDV] Updating for new bounds...');
+        
+        // 检查数据源是否存在
+        const source = vueThis.map.getSource('nkdv');
+        if (!source) {
+            console.warn('[NKDV] Source not ready yet, skipping update');
+            return;
+        }
+        
+        let geojson = await compute_nkdv_with_bounds(vueThis);
+        source.setData(geojson);
+        console.log('[NKDV] Update complete');
+    } catch (error) {
+        console.error('[NKDV] Error updating:', error);
+    }
+}
+
+// 更新属性（保持兼容性）
+// 当参数改变时，清除缓存并重新计算
+function updateAtriibution(vueThis) {
+    console.log('[NKDV] Parameters changed, clearing cache...');
+    clearCache();  // 清除缓存，强制重新计算
+    updateMapDebounced(vueThis);
 }
 
 export default {
     loadHeatMap,
-    upadateMap
+    updateAtriibution,
+    updateMap,
+    getBounds,
+    clearCache  // 导出清除缓存函数
 }
 
 function parseCsv(csvText) {

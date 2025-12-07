@@ -14,6 +14,7 @@ import ivtidx.InvertedIndex;
 import lombok.SneakyThrows;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import service.DefaultRelevantObjectServiceImpl;
 import service.IRelevantObjectService;
 import std.ASTD;
@@ -22,6 +23,7 @@ import std.BSTD;
 import java.io.InputStream;
 
 @Configuration
+@Profile("std")  // 只在 std profile 激活时加载此配置
 public class STDConfig {
 
     /**

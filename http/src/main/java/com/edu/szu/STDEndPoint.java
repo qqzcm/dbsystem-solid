@@ -7,6 +7,7 @@ import entity.Coordinate;
 import entity.Query;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/std")
 @AllArgsConstructor
 @Log4j2
+@Profile("std")  // 只在 std profile 激活时加载此控制器
 public class STDEndPoint {
     private STDService stdService;
 

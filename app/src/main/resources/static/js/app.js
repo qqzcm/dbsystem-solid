@@ -164,6 +164,11 @@ new Vue({
         bandwidth_level: 2,
         bandwidth:500,
         lixel:200,
+        // 新增：边界参数（用于动态裁剪）
+        lon_min: -122.52,
+        lon_max: -122.35,
+        lat_min: 37.70,
+        lat_max: 37.82
       },
       LDV: {
         labelPosition: "right",
@@ -177,11 +182,11 @@ new Vue({
 
   methods: {
     showLoader() {
-      console.log("showLoader");
+      // console.log("showLoader");
       this.isLoading = true; // 设置 isLoading 为 true
     },
     hideLoader() {
-      console.log("hideLoader");
+      // console.log("hideLoader");
       this.isLoading = false; // 设置 isLoading 为 false
     },
     async paramsSwitch(state) {
@@ -378,7 +383,7 @@ new Vue({
         this.currentAlgorithm = "kdv";
         this.paramsSwitch('kdv');
         await kdv.loadHeatMap(this);
-        console.log("KDV loaded");
+        // console.log("KDV loaded");
 
         // await new Promise(resolve => setTimeout(resolve, 7500));
       } finally {
@@ -391,7 +396,7 @@ new Vue({
         this.currentAlgorithm = "NKDV";
         this.paramsSwitch('NKDV');
         await NKDV.loadHeatMap(this);
-        console.log("NKDV loaded");
+        // console.log("NKDV loaded");
       } finally {
         this.hideLoader(); // 隐藏加载动画
       }
