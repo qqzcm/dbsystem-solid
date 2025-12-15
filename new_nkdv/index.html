@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WebAssembly Example</title>
+  <button id="runBtn">Click</button>
+</head>
+<body>
+  <h1>Hello, WebAssembly!</h1>
+  <pre id="output"></pre>
+
+  <script src="./nkdv.js"></script>
+  <script type="module">
+    import createModule from './nkdvCpp.js';
+    let nkdvModule;
+    (async () => {
+      nkdvModule = await createModule();
+      nkdvModule._load_network()
+      nkdvModule._load_parameters(3,50,2,1000); 
+    })();
+    async function RUN(){
+      const response = await fetch('/edges_geometry.csv');
+      if (!response.ok) throw new Error('网络响应错误');
+      const text = await response.text();
+      let csvText = text;
+      console.log("load network");
+      let data =  nkdvModule.UTF8ToString(nkdvModule._compute())
+      console.log("compute data")
+      
+      // console.log(data); 
+
+      const edgeCoords = parseCsv(csvText);
+      const lixelData = parseOutputText(data);
+      const geojson = buildGeoJson(edgeCoords, lixelData);
+
+      // 查看结果
+      console.log(JSON.stringify(geojson, null, 2));
+    }
+
+    document.getElementById('runBtn').addEventListener('click', RUN);
+  </script>
+</body>
+</html>
