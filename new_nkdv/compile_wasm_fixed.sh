@@ -69,8 +69,8 @@ emcc -O3 \
   main.cpp init.cpp alg_NKDV.cpp KAF.cpp shortest_path.cpp \
   -o nkdvCpp.js \
   -std=c++11 \
-  -s EXPORTED_FUNCTIONS='["_compute","_load_network","_load_geometry","_reset_network","_load_parameters"]' \
-  -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap"]' \
+  -s EXPORTED_FUNCTIONS='["_compute","_load_network","_load_spatiotemporal_network","_load_geometry","_reset_network","_load_parameters"]' \
+  -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString"]' \
   -s ALLOW_MEMORY_GROWTH=1 \
   -s INITIAL_MEMORY=67108864 \
   -s MAXIMUM_MEMORY=536870912 \

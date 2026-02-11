@@ -100,6 +100,7 @@ struct model
 	int kdv_type; //1: spatial KDE, 3: spatiotemporal KDE
 	double t_L, t_U; //time range
 	double bandwidth_t; //temporal bandwidth
+	double cur_t; //current time for spatiotemporal KDE calculation
 	int k_type_t; //temporal kernel type
 	double gamma_t; //temporal kernel parameter
 

@@ -83,12 +83,25 @@ extern "C"{
 		return output_buffer.c_str();
 	}
 	// Load network data (call once at initialization)
+	// Default: load spatial dataset
 	void load_network()
 	{
 		our_model.network_fileName = (char*)"./datasets/San_Francisco/San_Francisco_network";
 		our_model.out_NKDV_fileName = (char*)"Results/Testing_M3_K1";
+		our_model.kdv_type = 1; // Default to spatial mode
 		load_network(our_model);
 		cout << "Network loaded: " << our_model.n << " nodes, " 
+		     << our_model.m << " edges" << endl;
+	}
+	
+	// Load spatiotemporal network data (call when kdv_type=3)
+	void load_spatiotemporal_network()
+	{
+		our_model.network_fileName = (char*)"./datasets/San_Francisco/San_Francisco_network_spatiotemporal";
+		our_model.out_NKDV_fileName = (char*)"Results/Testing_M3_K1";
+		our_model.kdv_type = 3; // Set to spatiotemporal mode
+		load_network(our_model);
+		cout << "Spatiotemporal network loaded: " << our_model.n << " nodes, " 
 		     << our_model.m << " edges" << endl;
 	}
 	
@@ -155,6 +168,7 @@ extern "C"{
 		double t_L,
 		double t_U,
 		double bandwidth_t,
+		double cur_t,
 		double x_L,
 		double x_U,
 		double y_L,
@@ -213,6 +227,7 @@ extern "C"{
 		our_model.t_L = t_L;
 		our_model.t_U = t_U;
 		our_model.bandwidth_t = bandwidth_t;
+		our_model.cur_t = cur_t; // Use provided cur_t
 		our_model.k_type_t = 2; // Default to Epanechnikov for temporal kernel
 		our_model.gamma_t = 1;
 

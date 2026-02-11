@@ -168,7 +168,16 @@ new Vue({
         lon_min: -122.52,
         lon_max: -122.35,
         lat_min: 37.70,
-        lat_max: 37.82
+        lat_max: 37.82,
+        // Temporal 相关参数（与 KDV 同步）
+        temporal: 0,
+        nkdv_type: 1,
+        bandwidth_t: 3,
+        t_L: 7,
+        t_U: 14,
+        t_pixels: 28,
+        cur_t: 7,
+        interval: null
       },
       LDV: {
         labelPosition: "right",
@@ -341,13 +350,52 @@ new Vue({
     updateNKDVBandwidth() {
       let bandwidthMap = [0,100,500,1000,2000,3000,4000,5000]
       this.NKDV.bandwidth = bandwidthMap[this.NKDV.bandwidth_level]
-      NKDV.upadateMap(this);
+      NKDV.updateAtriibution(this);
     },
     updateNKDVLixel() {
-      NKDV.upadateMap(this);
+      NKDV.updateAtriibution(this);
     },
     updateNKDVOpacity() {
       this.map.setPaintProperty('nkdv-lines', 'line-opacity', this.NKDV.opacity);
+    },
+    async updateNKDVTemporalSwitch() {
+      if (this.NKDV.temporal == true) {
+        this.NKDV.nkdv_type = 3;
+        // 如果切换到时空模式且地图已加载，需要触发预计算
+        if (this.map && this.map.getSource('nkdv')) {
+          // 地图已加载，需要预计算所有时间点
+          console.log('[NKDV] Switching to spatiotemporal mode, triggering precomputation...');
+          const precomputed = await NKDV.ensurePrecomputation(this);
+          if (precomputed) {
+            // 预计算成功，只更新时间过滤器，不调用 updateAtriibution（避免清除缓存）
+            NKDV.updateCurrentTime(this);
+            return;
+          }
+        }
+      } else {
+        this.NKDV.nkdv_type = 1;
+      }
+      // 如果预计算失败或切换到空间模式，正常更新
+      NKDV.updateCurrentTime(this);//移除或添加过滤器
+      NKDV.updateAtriibution(this);
+    },
+    updateNKDVBandwidth_t() {
+      NKDV.updateAtriibution(this);
+    },
+    updateNKDVCur_t() {
+      NKDV.updateCurrentTime(this);
+    },
+    switchNKDVPlay(){
+      if(this.NKDV.interval==null){
+        this.NKDV.interval = setInterval(()=>{
+            this.NKDV.cur_t +=(this.NKDV.t_U-this.NKDV.t_L)/this.NKDV.t_pixels;
+            if(this.NKDV.cur_t>=this.NKDV.t_U) this.NKDV.cur_t = this.NKDV.t_L;
+            NKDV.updateCurrentTime(this)
+        },150);
+      }else{
+        clearInterval(this.NKDV.interval)
+        this.NKDV.interval = null;
+      }
     },
 
 

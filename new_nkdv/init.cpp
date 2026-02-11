@@ -124,6 +124,14 @@ void add_lixels_for_edge(int e, model& our_model)
 		l.dist_n2 = length - middle_dist;
 		l.edge_index = e;
 		l.KDE_value = -100;
+		
+		// Set time for spatiotemporal mode
+		if (our_model.kdv_type == 3) {
+			l.time = our_model.cur_t;
+		} else {
+			l.time = 0.0;
+		}
+		
 		our_model.lixel_set.push_back(l);
 
 		cur_dist += our_model.lixel_reg_length;

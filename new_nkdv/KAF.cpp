@@ -928,9 +928,9 @@ void NKDV_spatiotemporal(model& our_model)
 {
 	Lixel& cur_l = our_model.cur_l;
 	
-	// For spatiotemporal mode, we use the lixel's time as cur_time
-	// In a full implementation, this would iterate over time slices
-	double cur_time = cur_l.time;
+	// For spatiotemporal mode, we use the user-set cur_t as cur_time
+	// This allows all lixels to be computed with the same current time
+	double cur_time = our_model.cur_t;
 	
 	cur_l.KDE_value = 0;
 	double edge_KA_value;

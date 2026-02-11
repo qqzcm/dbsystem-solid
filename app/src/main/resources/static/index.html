@@ -517,6 +517,48 @@
                                 </div>
                             </div>
                         </div>
+                        <div style="margin-top: 10px;">
+                            <span class="item_label">
+                                <span>Temporal NKDV</span>
+                                <el-checkbox v-model="NKDV.temporal" @change="updateNKDVTemporalSwitch"
+                                    style="font-size:14px;"></el-checkbox>
+                            </span>
+                        </div>
+                        <div style="margin-top: 10px;" v-show="NKDV.nkdv_type == 3">
+                            <span class="item_label">Influence Days</span>
+                            <div class="param_adjuster" style="width: 100%;display: inline-block">
+                                <div class="progress-div">
+                                    <img src="img/params/pause.png" class="process-pause">
+                                    <el-slider v-model="NKDV.bandwidth_t" :min="1" :max="7" :step="1"
+                                        @change="updateNKDVBandwidth_t"></el-slider>
+                                    <input class="param_input" type="number" v-model="NKDV.bandwidth_t"
+                                        style="height: 18px;width: 35px;position: relative;left: 20px;top: 2px"
+                                        readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px;" v-show="NKDV.nkdv_type == 3">
+                            <span class="item_label">
+                                <span>Current Time</span>
+                                <span @click="switchNKDVPlay">
+                                    <span style="font-size: 20px;" class="el-icon-video-play"
+                                        v-if="NKDV.interval==null"></span>
+                                    <span style="font-size: 20px;" class="el-icon-video-pause" v-else></span>
+                                </span>
+
+                            </span>
+                            <div class="param_adjuster" style="width: 100%;display: inline-block">
+                                <div class="progress-div">
+                                    <img src="img/params/pause.png" class="process-pause">
+                                    <el-slider v-model="NKDV.cur_t" :min="NKDV.t_L"
+                                        :max="NKDV.t_U-(NKDV.t_U-NKDV.t_L)/NKDV.t_pixels"
+                                        :step="(NKDV.t_U-NKDV.t_L)/NKDV.t_pixels" @input="updateNKDVCur_t"></el-slider>
+                                    <input class="param_input" type="number" v-model="NKDV.cur_t"
+                                        style="height: 18px;width: 35px;position: relative;left: 20px;top: 2px"
+                                        readonly>
+                                </div>
+                            </div>
+                        </div>
                         <div class="params_bottom" style="margin-top:10%;">
                             <div class="bottom1"></div>
                             <div class="bottom_line"></div>
@@ -661,6 +703,7 @@
     </div>
 </body>
 <script src="js/kdv/kdvCpp.js"></script>
+<script src="js/nkdvWasm/nkdvCpp.js"></script>
 <script src="js/environment/d3.js"></script>
 <script src="js/environment/vue.js"></script>
 <script src="js/environment/elementUI.js"></script>
