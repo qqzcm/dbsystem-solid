@@ -1,5 +1,5 @@
 #include "Visual.h"
-
+#include "LDVInterface.h"
 void load_data(statistics& stat)
 {
 	double x_first, y_first;
@@ -146,6 +146,64 @@ void init(statistics& stat, int argc, char** argv)
 	//if (stat.method == 2)
 	//	init_tree(stat);
 
+}
+
+// 将当前 statistics 中的 plane 输出为字符串："x y density\n"
+static std::string output_visual_to_string(statistics& stat)
+{
+	std::stringstream ss;
+	for (int x = 0; x < stat.X; x++)
+	{
+		for (int y = 0; y < stat.Y; y++)
+		{
+			ss << std::setprecision(10)
+			   << stat.plane[x][y].x_center << " "
+			   << stat.plane[x][y].y_center << " "
+			   << stat.plane[x][y].density_value << "\n";
+		}
+	}
+	return ss.str();
+}
+
+// 对外统一调用入口：基于传入窗口边界进行栅格化与 LDV 计算，并以字符串形式返回
+std::string computeLDV(
+	const char* input_data_fileName,
+	int method,
+	int X, int Y,
+	double x_L, double x_U,
+	double y_L, double y_U,
+	double bandwidth,
+	double epsilon
+)
+{
+	statistics stat;
+
+	// 基本参数
+	stat.input_data_fileName = const_cast<char*>(input_data_fileName);
+	stat.output_visual_fileName = nullptr; // 不写文件
+	stat.method = method;
+	stat.X = X;
+	stat.Y = Y;
+	stat.bandwidth = bandwidth;
+	stat.epsilon = epsilon;
+
+	// 读取数据集
+	load_data(stat);
+
+	// 使用传入窗口作为当前可视边界
+	stat.boundary_x_min = x_L;
+	stat.boundary_x_max = x_U;
+	stat.boundary_y_min = y_L;
+	stat.boundary_y_max = y_U;
+
+	// 在窗口上初始化像素网格
+	init_pixel(stat);
+
+	// 执行既有可视化算法
+	visual_algorithm(stat);
+
+	// 输出为字符串
+	return output_visual_to_string(stat);
 }
 
 void visual_algorithm(statistics& stat)
