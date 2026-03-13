@@ -52,7 +52,7 @@ public class DCPGSManager {
                         "omega: {}, tau: {}, maxD: {}, fileKey: {}",
                 params.getEpsilon(),params.getOmega(),params.getTau(),params.getMaxD(), checkInFilePath);
         RTree<String, CheckIn> rTree = RTree.star().maxChildren(30).create();
-        var checkIns = CheckInReader.getCheckInFromFile(checkInFilePath);
+        var checkIns = CheckInReader.getCheckInFromFile(resourcePath + checkInFilePath);
         log.info("checkIns size: {}", checkIns.size());
         if(edgeMapSet.get(dataSet) == null){
             throw new IllegalArgumentException("edgeMap is null");
@@ -93,7 +93,7 @@ public class DCPGSManager {
     }
 
     public DCPGSManager(){
-        this("DCPGS/src/main/resources/");
+        this("data/dcpgs/");
     }
 
     public DCPGSManager(String resourcePath) {

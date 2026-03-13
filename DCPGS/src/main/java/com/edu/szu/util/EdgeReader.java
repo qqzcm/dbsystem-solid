@@ -2,7 +2,7 @@ package com.edu.szu.util;
 
 import org.apache.commons.io.IOUtils;
 
-import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +15,7 @@ import java.util.Set;
 public class EdgeReader {
     public static Map<Long, Set<Long>> getEdges(String fileName) throws IOException {
         var result = new HashMap<Long, Set<Long>>();
-        try(InputStream is = new ByteArrayInputStream(IOUtils.resourceToByteArray(fileName,EdgeReader.class.getClassLoader()))){
+        try(InputStream is = new FileInputStream(fileName)){
             List<String> lines = IOUtils.readLines(is, StandardCharsets.UTF_8);
             lines.forEach(line ->{
                 String[] users = line.split("\t");

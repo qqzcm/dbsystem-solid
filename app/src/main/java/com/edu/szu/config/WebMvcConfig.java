@@ -19,6 +19,8 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
     protected void addResourceHandlers(ResourceHandlerRegistry registry) {
         log.info("资源映射start");
         registry.addResourceHandler("/**").addResourceLocations("classpath:/static/");
+        registry.addResourceHandler("/data/pa/**").addResourceLocations("file:data/pa/");
+        registry.addResourceHandler("/data/paGeoJson/**").addResourceLocations("file:data/pa-geojson/");
     }
 
 }

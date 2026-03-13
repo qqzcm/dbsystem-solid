@@ -1,6 +1,5 @@
 package com.edu.szu.config;
 
-import cn.hutool.core.io.resource.ClassPathResource;
 import com.edu.szu.service.STDService;
 import com.edu.szu.service.impl.STDServiceImpl;
 import com.github.davidmoten.rtree.InternalStructure;
@@ -30,9 +29,11 @@ public class STDConfig {
      * relevantObjectService
      * @return get point object service
      */
+    @SneakyThrows
     @Bean
-    public IRelevantObjectService relevantObjectService() {
-        return new DefaultRelevantObjectServiceImpl();
+    public IRelevantObjectService relevantObjectService(DatasetLoader datasetLoader, DatasetProperties datasetProperties) {
+        return new DefaultRelevantObjectServiceImpl(
+                datasetLoader.resolveResource(datasetProperties.getStd().getObjsPath()));
     }
 
     /**
@@ -40,8 +41,8 @@ public class STDConfig {
      */
     @SneakyThrows
     @Bean
-    public RTree<String, Geometry> rTreeSTD() {
-        InputStream inputStream = new ClassPathResource("rtreeSkyline.txt").getStream();
+    public RTree<String, Geometry> rTreeSTD(DatasetLoader datasetLoader, DatasetProperties datasetProperties) {
+        InputStream inputStream = datasetLoader.resolveResource(datasetProperties.getStd().getRtreePath());
         int available = inputStream.available();
         return Serializers.flatBuffers().utf8().read(inputStream, available, InternalStructure.DEFAULT);
     }
@@ -58,9 +59,12 @@ public class STDConfig {
      * InvertedIndex
      * @return Inverted file index
      */
+    @SneakyThrows
     @Bean
-    public InvertedIndex<RelevantObject> invertedIndexSTD(IRelevantObjectService relevantObjectService) {
-        return new DefaultLeafInvertedIndex(relevantObjectService);
+    public InvertedIndex<RelevantObject> invertedIndexSTD(IRelevantObjectService relevantObjectService,
+                                                          DatasetLoader datasetLoader, DatasetProperties datasetProperties) {
+        return new DefaultLeafInvertedIndex(relevantObjectService,
+                datasetLoader.resolveResource(datasetProperties.getStd().getIfilePath()));
     }
 
     /**

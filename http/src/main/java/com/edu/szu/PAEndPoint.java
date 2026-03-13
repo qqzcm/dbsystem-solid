@@ -1,10 +1,10 @@
 package com.edu.szu;
 
+import com.edu.szu.config.DatasetProperties;
 import com.edu.szu.entity.PAGeoJson;
 import com.edu.szu.entity.PAJson;
 import com.edu.szu.entity.CheckInJson;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.extern.log4j.Log4j2;
@@ -26,9 +26,9 @@ public class PAEndPoint {
     private final String basePath;
     private final String targetPath;
 
-    public PAEndPoint(@Value("${PA.basePath}") String basePath,@Value("${PA.targetPath}") String targetPath){
-        this.basePath = basePath;
-        this.targetPath=targetPath;
+    public PAEndPoint(DatasetProperties datasetProperties){
+        this.basePath = datasetProperties.getPa().getBasePath();
+        this.targetPath = datasetProperties.getPa().getTargetPath();
     }
 
     @PostMapping("/{inputPath}/runpa")

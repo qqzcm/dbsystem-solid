@@ -21,11 +21,12 @@ public class DefaultRelevantObjectServiceImpl implements IRelevantObjectService 
     private Map<String, RelevantObject> relevantObjectMap = new HashMap<>();
 
     public DefaultRelevantObjectServiceImpl() {
+        this(DefaultRelevantObjectServiceImpl.class.getClassLoader().getResourceAsStream("objsSkyline.txt"));
+    }
 
-        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("objsSkyline.txt");
-
+    public DefaultRelevantObjectServiceImpl(InputStream resourceAsStream) {
         if (resourceAsStream == null) {
-            throw new RuntimeException("objs.txt不存在！");
+            throw new RuntimeException("objsSkyline.txt not found!");
         }
 
         try (

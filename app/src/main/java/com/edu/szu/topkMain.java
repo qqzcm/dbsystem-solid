@@ -1,12 +1,10 @@
 package com.edu.szu;
 
+import com.edu.szu.config.DatasetProperties;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Import;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -76,6 +74,12 @@ public class topkMain {
   String inputKeyword;
   int Qk;
 
+  private final DatasetProperties datasetProperties;
+
+  public topkMain(DatasetProperties datasetProperties) {
+    this.datasetProperties = datasetProperties;
+  }
+
   @GetMapping("/hello")
   public JSONArray getLon(@RequestParam(value = "lon_topk") String lon,
                           @RequestParam(value = "la_topk") String la,
@@ -87,16 +91,18 @@ public class topkMain {
     inputKeyword = key;
     Qk = Integer.parseInt(inputk);
 
+    var topkProps = datasetProperties.getTopk();
+    String topkBasePath = topkProps.getBasePath();
+
     JSONArray jsonArray = new JSONArray();
 
     //性能优化
     //LoadKG
     //StoreData
     /*读取顶点的keyword信息*/
-    /*把绝对路径改为相对路径*/
-    File file1 = new File("app/src/main/resources/static/data/txt/uk/eid2keyword.txt");
+    File file1 = new File(topkBasePath + topkProps.getEid2keyword());
     /*读取顶点的经纬度信息*/
-    File file2 = new File("app/src/main/resources/static/data/txt/uk/eid2coor.txt");
+    File file2 = new File(topkBasePath + topkProps.getEid2coor());
     Point[] points = new Point[34000];
     for(int k=0;k<34000;k++) {
       points[k] = new Point();
@@ -152,14 +158,14 @@ public class topkMain {
     //拆分relation2id文件中的关键字，提取最后一个单词作为关键字，并将信息存储到Relationship中
     /*uk*/
 
-    File fileS = new  File("app/src/main/resources/static/data/txt/uk/relationship.txt");
+    File fileS = new  File(topkBasePath + "relationship.txt");
     Relationship relationship = new Relationship();
     try {
       if(!fileS.exists()) {
         fileS.createNewFile();
       }
       BufferedWriter writeRelation = new BufferedWriter(new FileWriter(fileS));
-      BufferedReader readRelation = new BufferedReader(new FileReader("app/src/main/resources/static/data/txt/uk/relation2id.txt"));
+      BufferedReader readRelation = new BufferedReader(new FileReader(topkBasePath + topkProps.getRelation2id()));
       String lineOfRelation;
       lineOfRelation = readRelation.readLine();
       String []numOfR = lineOfRelation.split("#");
@@ -193,7 +199,7 @@ public class topkMain {
     /**加 读取Entity名称到顶点中**/
     /*uk*/
     try {
-      BufferedReader readEntity = new BufferedReader(new FileReader("app/src/main/resources/static/data/txt/uk/Entity.txt"));
+      BufferedReader readEntity = new BufferedReader(new FileReader(topkBasePath + topkProps.getEntity()));
       String lineOfEntity;
       while((lineOfEntity = readEntity.readLine()) != null) {
         String[] numOfE = lineOfEntity.split(":");
@@ -224,7 +230,7 @@ public class topkMain {
       //graph.neighbors[zt] = new int[total];
     }
     try {
-      BufferedReader readTest = new BufferedReader(new FileReader("app/src/main/resources/static/data/txt/uk/train2id.txt")); //测试数据
+      BufferedReader readTest = new BufferedReader(new FileReader(topkBasePath + topkProps.getTrain2id())); //测试数据
       String lineOfTest;
       lineOfTest = readTest.readLine();
       while((lineOfTest = readTest.readLine()) != null) {

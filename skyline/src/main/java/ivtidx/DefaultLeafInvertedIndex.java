@@ -24,11 +24,12 @@ public class DefaultLeafInvertedIndex implements InvertedIndex<RelevantObject> {
 
 
     public DefaultLeafInvertedIndex(IRelevantObjectService relevantObjectService) {
+        this(relevantObjectService, DefaultLeafInvertedIndex.class.getClassLoader().getResourceAsStream("iFileSkyline.txt"));
+    }
 
-        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("iFileSkyline.txt");
-
+    public DefaultLeafInvertedIndex(IRelevantObjectService relevantObjectService, InputStream resourceAsStream) {
         if (resourceAsStream == null) {
-            throw new RuntimeException("iFileSkyline.txt not exists!");
+            throw new RuntimeException("iFileSkyline.txt not found!");
         }
         assert relevantObjectService != null;
 

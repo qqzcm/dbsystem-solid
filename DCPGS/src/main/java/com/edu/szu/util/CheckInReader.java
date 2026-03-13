@@ -40,7 +40,7 @@ public class CheckInReader {
         for (String filePath : files) {
             log.info("reading file: {}",filePath);
             try (var bf = new BufferedReader(new InputStreamReader(
-                    new ByteArrayInputStream(IOUtils.resourceToByteArray(filePath, CheckInReader.class.getClassLoader()))))) {
+                    new FileInputStream(filePath)))) {
                 String line;
                 while ((line = bf.readLine()) != null) {
                     var checkIn = stringToCheckIn(line);
@@ -64,7 +64,7 @@ public class CheckInReader {
         for (String filePath : filePaths) {
             log.info("reading file: {}",filePath);
             try (var bf = new BufferedReader(new InputStreamReader(
-                    new ByteArrayInputStream(IOUtils.resourceToByteArray(filePath, CheckInReader.class.getClassLoader()))))) {
+                    new FileInputStream(filePath)))) {
                 String line;
                 while ((line = bf.readLine()) != null) {
                     var checkIn = stringToCheckIn(line);
@@ -98,7 +98,7 @@ public class CheckInReader {
     }
 
     public static List<CheckIn> splitArea(String areaFileName, List<CheckIn> checkIns) throws IOException {
-        String areaJson = IOUtils.resourceToString("./area/" + areaFileName, StandardCharsets.UTF_8, CheckInReader.class.getClassLoader());
+        String areaJson = IOUtils.toString(new FileInputStream(areaFileName), StandardCharsets.UTF_8);
         AreaJson area = new Gson().fromJson(areaJson, AreaJson.class);
         var split = new ArrayList<CheckIn>();
         checkIns.forEach(checkIn -> {
@@ -189,7 +189,7 @@ public class CheckInReader {
     }
 
     public static void parseGeoJsonTo(String origin, String target) throws IOException {
-        String json = IOUtils.resourceToString(origin, StandardCharsets.UTF_8, CheckInReader.class.getClassLoader());
+        String json = IOUtils.toString(new FileInputStream(origin), StandardCharsets.UTF_8);
         CheckInJson checkInJson = new Gson().fromJson(json,CheckInJson.class);
         DCPGSGeoJson DCPGSGeoJson = parseGeoJson(checkInJson);
         try(var bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(target)))){
@@ -217,7 +217,7 @@ public class CheckInReader {
         String filePath = "brightkite/loc-brightkite_totalCheckins.txt";
         String basePath = "checkIn";
         try(var bf = new BufferedReader(new InputStreamReader(
-                new ByteArrayInputStream(IOUtils.resourceToByteArray(filePath, CheckInReader.class.getClassLoader()))))) {
+                new FileInputStream(filePath)))) {
             String line;
             int size = 0;
             int index = 1;
