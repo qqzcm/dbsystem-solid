@@ -13,6 +13,8 @@ public class DatasetProperties {
     private TopkDataset topk;
     private PaDataset pa;
     private KdvDataset kdv;
+    private NkdvDataset nkdv;
+    private LdvDataset ldv;
     private StdDataset std;
 
     @Data
@@ -41,6 +43,16 @@ public class DatasetProperties {
     @Data
     public static class KdvDataset {
         private String dataPath;
+    }
+
+    @Data
+    public static class NkdvDataset {
+        private String basePath;
+    }
+
+    @Data
+    public static class LdvDataset {
+        private String basePath;
     }
 
     @Data

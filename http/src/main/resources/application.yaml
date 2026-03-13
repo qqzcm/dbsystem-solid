@@ -19,6 +19,10 @@ datasets:
     target-path: data/pa-geojson/
   kdv:
     data-path: data/kdv/
+  nkdv:
+    base-path: data/nkdv/
+  ldv:
+    base-path: data/ldv/
   std:
     rtree-path: data/std/rtreeSkyline.txt
     objs-path: data/std/objsSkyline.txt

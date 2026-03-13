@@ -21,6 +21,8 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
         registry.addResourceHandler("/**").addResourceLocations("classpath:/static/");
         registry.addResourceHandler("/data/pa/**").addResourceLocations("file:data/pa/");
         registry.addResourceHandler("/data/paGeoJson/**").addResourceLocations("file:data/pa-geojson/");
+        registry.addResourceHandler("/data/NKDV/**").addResourceLocations("file:data/nkdv/");
+        registry.addResourceHandler("/data/LDV/**").addResourceLocations("file:data/ldv/");
     }
 
 }
